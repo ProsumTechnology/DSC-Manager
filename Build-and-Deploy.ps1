@@ -38,6 +38,8 @@ Update-DSCMTable -ConfigurationData $ConfigurationData -FileName $PullServerNode
 #Load ConfigurationData then add thumbprint information if available for final configuration application
 $UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $ConfigurationData -FileName $PullServerNodeCSV
 
+#Create All Configuration MOFs based on updated data and place in respective Pull Server Configuration
+
 
 ######################################################################################
 # Unload DSC-Management

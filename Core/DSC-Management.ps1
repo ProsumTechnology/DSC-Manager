@@ -78,6 +78,38 @@ function Update-DSCMTable
         }
 }
 
+#This function returns an updated hashtable with GUID and cert information
+function Update-DSCMConfigurationData
+{
+    param(
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$ConfigurationData
+    )
+
+    #Load Each ConfigurationData file found into memory and execute updates
+    ForEach ($HashTable in $ConfigurationData) {
+        Try {
+            . .\ConfigurationData\$HashTable.ps1
+            Invoke-Expression "`$ReturnData = `$$HashTable"
+            }
+        Catch {
+            Throw "Cannot find configuration data $Hashtable"
+            }
+        }
+        
+        #Update ReturnData By calling other functions
+        $ReturnData.AllNodes | ForEach-Object -Process {
+            $CurrNode = $_.NodeName
+            $_.NodeName = (Update-DSCMGUIDMapping -NodeName $CurrNode -FileName $FileName)
+            if (Update-DSCMCertMapping -NodeName $CurrNode) {
+                $_.Thumbprint = (Update-DSCMCertMapping -NodeName $CurrNode)
+                $_.CertificateFile = $CertStore+'\'+$CurrNode+'.cer'
+                }
+            }
+    return $ReturnData
+}
+
 #This function is to update and maintain the Host-to-GUID mapping to ease management.
 function Update-DSCMGUIDMapping
 {
@@ -117,7 +149,6 @@ function Update-DSCMGUIDMapping
         }
  
 }
-
 
 #This function is to update and maintain the Certificate-to-host mapping to ease management
 function Update-DSCMCertMapping
