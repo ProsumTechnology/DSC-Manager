@@ -49,28 +49,33 @@ function Create-DSCMCertStores
     If ($TestOnly) {return $IsValid}
 }
 
-
 #This function is to update and maintain the Host-to-GUID mapping table
 function Update-DSCMTable
 {
     param(
     [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
     [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory=$false)][String]$ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$ConfigurationData
     )
 
     #Load Each ConfigurationData file found into memory and execute updates
     ForEach ($HashTable in $ConfigurationData) {
         Try {
-            . .\ConfigurationData\$HashTable.ps1
-            Invoke-Expression "`$ReturnData = `$$HashTable"
+            . $ConfigurationDataPath\$HashTable.ps1
+            If ($CompiledData -eq $NULL) {
+                Invoke-Expression "`$CompiledData = `$$HashTable"
+                }
+            Else {
+                Invoke-Expression "`$CompiledData.AllNodes = `$CompiledData.AllNodes + `$$HashTable.AllNodes"
+                }
             }
         Catch {
             Throw "Cannot find configuration data $Hashtable"
             }
 
         #Update CSVTable By calling other functions
-        $ReturnData.AllNodes | ForEach-Object -Process {
+        $CompiledData.AllNodes | ForEach-Object -Process {
             $CurrNode = $_.NodeName
             Update-DSCMGUIDMapping -NodeName $CurrNode -FileName $FileName -Silent
             Update-DSCMCertMapping -NodeName $CurrNode -FileName $FileName -CertStore $CertStore -Silent
@@ -84,14 +89,21 @@ function Update-DSCMConfigurationData
     param(
     [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
     [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory=$false)][String]$ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$ConfigurationData
     )
 
     #Load Each ConfigurationData file found into memory and execute updates
+    $ReturnData = $Null
     ForEach ($HashTable in $ConfigurationData) {
         Try {
-            . .\ConfigurationData\$HashTable.ps1
-            Invoke-Expression "`$ReturnData = `$$HashTable"
+            . $ConfigurationDataPath\$HashTable.ps1
+            If ($ReturnData -eq $NULL) {
+                Invoke-Expression "`$ReturnData = `$$HashTable"
+                }
+            Else {
+                Invoke-Expression "`$ReturnData.AllNodes = `$ReturnData.AllNodes + `$$HashTable.AllNodes"
+                }
             }
         Catch {
             Throw "Cannot find configuration data $Hashtable"
@@ -101,7 +113,9 @@ function Update-DSCMConfigurationData
         #Update ReturnData By calling other functions
         $ReturnData.AllNodes | ForEach-Object -Process {
             $CurrNode = $_.NodeName
-            $_.NodeName = (Update-DSCMGUIDMapping -NodeName $CurrNode -FileName $FileName)
+            If (Update-DSCMGUIDMapping -NodeName $CurrNode -FileName $FileName) {
+                $_.NodeName = (Update-DSCMGUIDMapping -NodeName $CurrNode -FileName $FileName)
+                }
             if (Update-DSCMCertMapping -NodeName $CurrNode) {
                 $_.Thumbprint = (Update-DSCMCertMapping -NodeName $CurrNode)
                 $_.CertificateFile = $CertStore+'\'+$CurrNode+'.cer'
@@ -132,7 +146,7 @@ function Update-DSCMGUIDMapping
                     $NodeGUID = [guid]::NewGuid()
                     $_.NodeGUID = $NodeGUID
                     }
-                Else {
+                ElseIf (($_.NodeName -eq $NodeName) -and $_.NodeGUID)  {
                     $NodeGUID = $_.NodeGuid
                     }
             If ($CSVFile -and !($CSVFile -eq (import-csv $Filename))) {
@@ -280,3 +294,28 @@ param(
         write-verbose "the file $CertStore cannot be found so there is nothing to update"
         }
     }
+
+#This function is to create MOF files and copy them to the Pull Server from the specific working directory
+function Update-DSCMPullServer 
+{
+param(
+    [Parameter(Mandatory=$true)][String]$Configuration,
+    [Parameter(Mandatory=$true)][String]$ConfigurationData,
+    [Parameter(Mandatory=$false)][String]$ConfigurationPath = "$env:HOME\DSC-Manager\Configuration",
+    [Parameter(Mandatory=$false)][String]$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration",
+    [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory=$false)][String]$WorkingPath = $env:TEMP
+    )
+
+    #Load DSC Configuration into script
+    Try {
+        Invoke-Expression ". $ConfigurationPath\$Configuration.ps1"
+        }
+    Catch {
+        Throw "error loading DSC Configuration $ConfigurationPath\$Configuration.ps1"
+        }
+
+    #generate MOF files using Configurationdata and output to the appropriate temporary path
+
+
+}

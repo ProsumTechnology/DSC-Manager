@@ -6,7 +6,12 @@ $ProximusHosts = @{
             Service = 'SCCM'
             Role = 'PrimarySite'
             DSLPath = 'E:\DSL'
-        }
+        },
 
+        @{ 
+            NodeName = "es-ssccm-02"
+            Service = 'SCCM'
+            Role = 'ClientFacingSite'
+        }
     ); 
 }

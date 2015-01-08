@@ -8,13 +8,15 @@
 ######################################################################################
 # Master Variables
 ######################################################################################
-$Configurations = 'SCCM-Configuration'
-$ConfigurationData = 'ProximusHosts'
-$SourceModules = '$env:HOMEDRIVE\DSC-Manager\Modules'
-$PullServerModules = '$env:PROGRAMFILES\WindowsPowershell\DscService\Modules'
-$PullServerConfiguration = '$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration'
-$PullServerCertStore = '$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates'
-$PullServerNodeCSV = '$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv'
+$Configuration = "SCCMConfiguration"
+$ConfigurationPath = "$env:HOMEDRIVE\DSC-Manager\Configuration"
+$ConfigurationData = "ProximusHosts"
+$ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData"
+$SourceModules = "$env:HOMEDRIVE\DSC-Manager\Modules"
+$PullServerModules = "$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
+$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration"
+$PullServerCertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates"
+$PullServerNodeCSV = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv"
 
 ######################################################################################
 # Import DSC-Management
@@ -33,13 +35,13 @@ if(!(Get-Module DSC-Management)) {
 ######################################################################################
 
 #Update the CSV table with missing Server,GUID, and Thumbprint information
-Update-DSCMTable -ConfigurationData $ConfigurationData -FileName $PullServerNodeCSV -CertStore $PullServerCertStore
+Update-DSCMTable -ConfigurationData $ConfigurationData -ConfigurationDataPath $ConfigurationDataPath -FileName $PullServerNodeCSV -CertStore $PullServerCertStore
 
 #Load ConfigurationData then add thumbprint information if available for final configuration application
-$UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $ConfigurationData -FileName $PullServerNodeCSV
+$UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $ConfigurationData -ConfigurationDataPath $ConfigurationDataPath -FileName $PullServerNodeCSV
 
 #Create All Configuration MOFs based on updated data and place in respective Pull Server Configuration
-
+Update-DSCMPullServer -Configuration $Configuration -ConfigurationPath $ConfigurationPath -ConfigurationData $UpdatedConfigurationData -PullServerConfiguration $PullServerConfiguration -CertStore $PullServerCertStore
 
 ######################################################################################
 # Unload DSC-Management
@@ -49,6 +51,6 @@ if(Get-Module DSC-Management) {
         Remove-Module 'DSC-Management'
         }
     Catch {
-        Throw "There was an error unloading the DSC-Management module!  Module still in memory"
+        Throw "There was an error unloading the DSC-Management module!  Module may still be in memory"
         }
     }
