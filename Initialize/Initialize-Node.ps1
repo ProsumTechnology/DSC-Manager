@@ -26,7 +26,7 @@
 
 #Variables for the script placed up top to make it easier to change
 $CertStore = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\NodeCertificates"
-$CSVFile = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\Configuration\dscnodes.csv"
+$CSVFile = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\Management\dscnodes.csv"
 $GetName = $env:COMPUTERNAME
 
 #Finds a certificate in the localmachine store with the latest expiration date

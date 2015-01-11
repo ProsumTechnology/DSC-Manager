@@ -2,16 +2,12 @@
 function Create-DSCMCertStores
 {
     param(
-        [Parameter(Mandatory=$false)][String]$FileName,
-        [Parameter(Mandatory=$false)][String]$CertStore,
+        [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
+        [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
         [switch]$TestOnly
         )
 
     [bool]$IsValid=$true
-    If(!($TestOnly)) {
-        If ($FileName -eq $NULL) {$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv"}
-        If ($CertStore -eq $NULL) {$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates"}
-        }
 
     If($CertStore -and !(Test-Path -Path ($CertStore)))
         {
@@ -53,7 +49,7 @@ function Create-DSCMCertStores
 function Update-DSCMTable
 {
     param(
-    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
     [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
     [Parameter(Mandatory=$false)][String]$ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$ConfigurationData
@@ -87,7 +83,7 @@ function Update-DSCMTable
 function Update-DSCMConfigurationData
 {
     param(
-    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
     [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
     [Parameter(Mandatory=$false)][String]$ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$ConfigurationData
@@ -128,7 +124,7 @@ function Update-DSCMConfigurationData
 function Update-DSCMGUIDMapping
 {
     param(
-    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName,
     [switch]$Silent
     )
@@ -168,7 +164,7 @@ function Update-DSCMGUIDMapping
 function Update-DSCMCertMapping
 {
 param(
-    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
     [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName,
     [switch]$Silent
@@ -295,19 +291,33 @@ param(
         }
     }
 
+#This function creates Variables storing credentials
+Function Create-PasswordScriptVariable
+{
+param(
+    [Parameter(Mandatory=$True)][String]$Name,
+    [Parameter(Mandatory=$True)][String]$User,
+    [Parameter(Mandatory=$True)][String]$Password
+    )
+
+    $SecurePass = ConvertTo-SecureString $Password -AsPlainText -Force
+    Invoke-Expression ("`$Script:$Name = New-Object System.Management.Automation.PSCredential $User, `$SecurePass")
+}
+
 #This function is to create MOF files and copy them to the Pull Server from the specific working directory
 function Update-DSCMPullServer 
 {
 param(
     [Parameter(Mandatory=$true)][String]$Configuration,
-    [Parameter(Mandatory=$true)][String]$ConfigurationData,
+    [Parameter(Mandatory=$true)][HashTable]$ConfigurationData,
+    [Parameter(Mandatory=$false)][String]$PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passwords.xml",
     [Parameter(Mandatory=$false)][String]$ConfigurationPath = "$env:HOME\DSC-Manager\Configuration",
     [Parameter(Mandatory=$false)][String]$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration",
-    [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
     [Parameter(Mandatory=$false)][String]$WorkingPath = $env:TEMP
     )
 
     #Load DSC Configuration into script
+    Write-Verbose -Message "Loading DSC Configuration..."
     Try {
         Invoke-Expression ". $ConfigurationPath\$Configuration.ps1"
         }
@@ -315,7 +325,21 @@ param(
         Throw "error loading DSC Configuration $ConfigurationPath\$Configuration.ps1"
         }
 
+    #Generate Password Variables from PasswordData
+    Write-Verbose -Message "Loading Passwords into secure string variables..."
+    $Config = [XML] (Get-Content "$PasswordData")
+    $Config.Credentials | ForEach-Object {$_.Variable} | Where-Object {$_.Name -ne $null} | ForEach-Object {Create-PasswordScriptVariable -Name $_.Name -User $_.User -Password $_.Password}
+
     #generate MOF files using Configurationdata and output to the appropriate temporary path
+    Write-Verbose -Message "Generating MOF using Configurationdata and output to $WorkingPath..."
+    invoke-expression "$Configuration -ConfigurationData `$ConfigurationData -outputpath $WorkingPath"
 
-
+    #create a checksum file for eah generated MOF
+    Write-Verbose -Message "Generating checksum..."
+    New-DSCCheckSum -ConfigurationPath $WorkingPath -OutPath $WorkingPath -Verbose -Force
+    
+    #All Generation is complete, now we copy it all to the Pull Server
+    Write-Verbose -Message "Moving all files to $PullServerConfiguration..."
+    $SourceFiles = $WorkingPath + "\*.mof*"
+    Move-Item $SourceFiles $PullServerConfiguration -Force
 }

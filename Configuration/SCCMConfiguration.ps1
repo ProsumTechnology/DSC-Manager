@@ -1,9 +1,9 @@
 ﻿Configuration SCCMConfiguration
 { 
-    param 
-    (
-        [Parameter(Mandatory=$true)][ValidateNotNullorEmpty()][PsCredential]$SCCMAdministratorCredential
-    )
+    #param 
+    #(
+    #    [Parameter(Mandatory=$true)][ValidateNotNullorEmpty()][PsCredential]$SCCMAdministratorCredential
+    #)
     
     Import-DSCResource -ModuleName cSCCM
     
@@ -869,54 +869,6 @@
             Ensure = "Present"
         }
 
-        cCMCollection SUPWorkstationOps
-        { 
-            CollectionName = "Software Updates - Workstations - LAX Operations"
-		    LimitingCollectionName = "All Workstations"
-		    ParentFolder = "Software Updates - Workstations"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPWorkstationGD
-        { 
-            CollectionName = "Software Updates - Workstations - LAX Game Development"
-		    LimitingCollectionName = "All Workstations"
-		    ParentFolder = "Software Updates - Workstations"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPWorkstationBS
-        { 
-            CollectionName = "Software Updates - Workstations - LAX Business Services"
-		    LimitingCollectionName = "All Workstations"
-		    ParentFolder = "Software Updates - Workstations"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPWorkstationES
-        { 
-            CollectionName = "Software Updates - Workstations - LAX Esports"
-		    LimitingCollectionName = "All Workstations"
-		    ParentFolder = "Software Updates - Workstations"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
         cCMCollection SUPWorkstationGeneral
         { 
             CollectionName = "Software Updates - Workstations - LAX General"
@@ -1028,7 +980,7 @@
         cCMCollection OSDDeployment
         { 
             CollectionName = "OSD - Master Deployment"
-		    LimitingCollectionName = "All Unknown Computers"
+		    LimitingCollectionName = "All Systems"
 		    ParentFolder = "Operating System Deployment"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
@@ -1310,4 +1262,3 @@
         }
     }    
 }
-

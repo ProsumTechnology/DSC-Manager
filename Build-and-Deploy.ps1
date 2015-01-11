@@ -16,7 +16,8 @@ $SourceModules = "$env:HOMEDRIVE\DSC-Manager\Modules"
 $PullServerModules = "$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
 $PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration"
 $PullServerCertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates"
-$PullServerNodeCSV = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration\dscnodes.csv"
+$PullServerNodeCSV = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv"
+$PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passwords.xml"
 
 ######################################################################################
 # Import DSC-Management
@@ -41,7 +42,7 @@ Update-DSCMTable -ConfigurationData $ConfigurationData -ConfigurationDataPath $C
 $UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $ConfigurationData -ConfigurationDataPath $ConfigurationDataPath -FileName $PullServerNodeCSV
 
 #Create All Configuration MOFs based on updated data and place in respective Pull Server Configuration
-Update-DSCMPullServer -Configuration $Configuration -ConfigurationPath $ConfigurationPath -ConfigurationData $UpdatedConfigurationData -PullServerConfiguration $PullServerConfiguration -CertStore $PullServerCertStore
+Update-DSCMPullServer -Configuration $Configuration -ConfigurationPath $ConfigurationPath -ConfigurationData $UpdatedConfigurationData -PasswordData $PasswordData -PullServerConfiguration $PullServerConfiguration
 
 ######################################################################################
 # Unload DSC-Management
