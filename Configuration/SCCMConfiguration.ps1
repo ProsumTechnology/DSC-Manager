@@ -242,7 +242,7 @@
 		    ParentFolder = "Root"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
-		    RefreshType = "Both"
+		    RefreshType = "Periodic"
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
@@ -265,7 +265,7 @@
 		    ParentFolder = "Root"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
-		    RefreshType = "Both"
+		    RefreshType = "Periodic"
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
@@ -869,18 +869,6 @@
             Ensure = "Present"
         }
 
-        cCMCollection SUPWorkstationGeneral
-        { 
-            CollectionName = "Software Updates - Workstations - LAX General"
-		    LimitingCollectionName = "All Workstations"
-		    ParentFolder = "Software Updates - Workstations"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
         cCMCollection SUPServersAD
         { 
             CollectionName = "Software Updates - Servers - AD Services"
@@ -989,9 +977,9 @@
             Ensure = "Present"
         }
 
-        cCMCollection PPLaptop
+        cCMCollection PPBalanced
         { 
-            CollectionName = "Power Profile - Standard Laptop"
+            CollectionName = "Power Profile - Balanced"
 		    LimitingCollectionName = "All Workstations"
 		    ParentFolder = "Power Profile"
 		    CollectionType = "Device"
@@ -1001,20 +989,9 @@
             Ensure = "Present"
         }
 
-        cCMCollectionRule PPLaptopQuery
-        {
-            RuleName = 'Workstation Laptops'
-            ParentCollection = 'Power Profile - Standard Laptop'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_System.ResourceId, SMS_R_System.ResourceType, SMS_R_System.Name, SMS_R_System.SMSUniqueIdentifier, SMS_R_System.ResourceDomainORWorkgroup, SMS_R_System.Client from  SMS_R_System inner join SMS_G_System_SYSTEM_ENCLOSURE on SMS_G_System_SYSTEM_ENCLOSURE.ResourceID = SMS_R_System.ResourceId where SMS_G_System_SYSTEM_ENCLOSURE.ChassisTypes in ("8", "9", "10", "11", "12", "14", "18", "21")'
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection PPDesktop
+        cCMCollection PPHighPerf
         { 
-            CollectionName = "Power Profile - Standard Desktop"
+            CollectionName = "Power Profile - High Performance"
 		    LimitingCollectionName = "All Workstations"
 		    ParentFolder = "Power Profile"
 		    CollectionType = "Device"
@@ -1024,82 +1001,26 @@
             Ensure = "Present"
         }
 
-        cCMCollectionRule PPDesktopQuery
-        {
-            RuleName = 'Workstation Desktops'
-            ParentCollection = 'Power Profile - Standard Desktop'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_System.ResourceId, SMS_R_System.ResourceType, SMS_R_System.Name, SMS_R_System.SMSUniqueIdentifier, SMS_R_System.ResourceDomainORWorkgroup, SMS_R_System.Client from  SMS_R_System inner join SMS_G_System_SYSTEM_ENCLOSURE on SMS_G_System_SYSTEM_ENCLOSURE.ResourceID = SMS_R_System.ResourceId where SMS_G_System_SYSTEM_ENCLOSURE.ChassisTypes in ("3", "4", "5", "6", "7", "15", "16")'
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection PPVDesktop
+        cCMCollection PPPwrSaver
         { 
-            CollectionName = "Power Profile - Virtual Desktop"
+            CollectionName = "Power Profile - Power Saver"
 		    LimitingCollectionName = "All Workstations"
 		    ParentFolder = "Power Profile"
 		    CollectionType = "Device"
 		    RefreshDays = "1"
 		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollectionRule PPVDesktopQuery
-        {
-            RuleName = 'Virtual Desktops'
-            ParentCollection = 'Power Profile - Virtual Desktop'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_System.ResourceId, SMS_R_System.ResourceType, SMS_R_System.Name, SMS_R_System.SMSUniqueIdentifier, SMS_R_System.ResourceDomainORWorkgroup, SMS_R_System.Client from  SMS_R_System inner join SMS_G_System_SYSTEM_ENCLOSURE on SMS_G_System_SYSTEM_ENCLOSURE.ResourceID = SMS_R_System.ResourceId where SMS_G_System_SYSTEM_ENCLOSURE.ChassisTypes in ("1")'
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection PPServers
-        { 
-            CollectionName = "Power Profile - Standard Server"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Power Profile"
-		    CollectionType = "Device"
-		    RefreshDays = "1"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollectionRule PPServersQuery
-        {
-            RuleName = 'Standard Server'
-            ParentCollection = 'Power Profile - Standard Server'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_System.ResourceId, SMS_R_System.ResourceType, SMS_R_System.Name, SMS_R_System.SMSUniqueIdentifier, SMS_R_System.ResourceDomainORWorkgroup, SMS_R_System.Client from  SMS_R_System inner join SMS_G_System_SYSTEM_ENCLOSURE on SMS_G_System_SYSTEM_ENCLOSURE.ResourceID = SMS_R_System.ResourceId where SMS_G_System_SYSTEM_ENCLOSURE.ChassisTypes in ("3", "4", "5", "6", "7", "15", "16")'
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
 
         cCMCollection PPVServer
         { 
-            CollectionName = "Power Profile - Virtual Server"
-		    LimitingCollectionName = "All Servers"
+            CollectionName = "Power Profile - Custom"
+		    LimitingCollectionName = "All Workstations"
 		    ParentFolder = "Power Profile"
 		    CollectionType = "Device"
 		    RefreshDays = "1"
 		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollectionRule PPVServersQuery
-        {
-            RuleName = 'Virtual Server'
-            ParentCollection = 'Power Profile - Virtual Server'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_System.ResourceId, SMS_R_System.ResourceType, SMS_R_System.Name, SMS_R_System.SMSUniqueIdentifier, SMS_R_System.ResourceDomainORWorkgroup, SMS_R_System.Client from  SMS_R_System inner join SMS_G_System_SYSTEM_ENCLOSURE on SMS_G_System_SYSTEM_ENCLOSURE.ResourceID = SMS_R_System.ResourceId where SMS_G_System_SYSTEM_ENCLOSURE.ChassisTypes in ("1")'
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
@@ -1120,7 +1041,7 @@
         File DSLAppPackages
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Application_Management\Packages'
+            DestinationPath = $Node.DSLPath + '\Application_Management\Packages\Windows_8_SxS'
             Ensure = 'Present'
 
         }
@@ -1169,14 +1090,6 @@
         {
             Type = 'Directory'
             DestinationPath = $Node.DSLPath + '\Operating_Systems\Images\Reference'
-            Ensure = 'Present'
-
-        }
-
-        File DSLOSDInstall
-        {
-            Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Install\Windows_8_SxS'
             Ensure = 'Present'
 
         }
