@@ -941,21 +941,9 @@
             Ensure = "Present"
         }
 
-        cCMCollection OSDWin7Capture
+        cCMCollection OSDBuildCapture
         { 
-            CollectionName = "OSD - Windows 7 Build and Capture"
-		    LimitingCollectionName = "All Systems"
-		    ParentFolder = "Operating System Deployment"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection OSDWin81Capture
-        { 
-            CollectionName = "OSD - Windows 8.1 Build and Capture"
+            CollectionName = "OSD - Build and Capture"
 		    LimitingCollectionName = "All Systems"
 		    ParentFolder = "Operating System Deployment"
 		    CollectionType = "Device"
