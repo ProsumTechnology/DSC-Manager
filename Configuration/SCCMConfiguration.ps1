@@ -100,6 +100,15 @@
             Ensure = "Present"
         }
         
+        cCMFolder DeviceSCCMUpdates
+        { 
+            FolderName = "Software Updates - SCCM"
+            FolderType = "Device Collection"
+            ParentFolder = "Software Updates"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
         cCMFolder DeviceOSD
         { 
             FolderName = "Operating System Deployment"
@@ -846,34 +855,71 @@
             Ensure = "Present"
         }
 
-        cCMCollection SUPWorkstationMW
+        cCMCollection SUPADRSVRAssign
         { 
-            CollectionName = "Software Updates - Workstations - Maintenance Window"
+            CollectionName = "Software Updates - Servers - ADR Assignment"
+		    LimitingCollectionName = "All Servers"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRSVRWeek1
+        { 
+            CollectionName = "Software Updates - Servers - Week 1"
+		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRSVRWeek2
+        { 
+            CollectionName = "Software Updates - Servers - Week 2"
+		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRSVRWeek3
+        { 
+            CollectionName = "Software Updates - Servers - Week 3"
+		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+           cCMCollection SUPADRWKSAssign
+        { 
+            CollectionName = "Software Updates - Workstations - ADR Assignment"
 		    LimitingCollectionName = "All Workstations"
 		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
-		    RefreshDays = "1"
+		    RefreshDays = "7"
 		    RefreshType = "Periodic"
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
 
-        cCMCollectionRule SUPWorkstationMWQuery
-        {
-            RuleName = 'Grab All'
-            ParentCollection = 'Software Updates - Workstations - Maintenance Window'
-            ParentCollectionType = 'Device'
-            QueryType = 'Query'
-            QueryExpression = 'select SMS_R_SYSTEM.ResourceID,SMS_R_SYSTEM.ResourceType,SMS_R_SYSTEM.Name,SMS_R_SYSTEM.SMSUniqueIdentifier,SMS_R_SYSTEM.ResourceDomainORWorkgroup,SMS_R_SYSTEM.Client from SMS_R_System'
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPServersAD
+        cCMCollection SUPADRWKSWeek1
         { 
-            CollectionName = "Software Updates - Servers - AD Services"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Software Updates - Servers"
+            CollectionName = "Software Updates - Workstations - Week 1"
+		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
+		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
 		    RefreshType = "Periodic"
@@ -881,11 +927,11 @@
             Ensure = "Present"
         }
 
-        cCMCollection SUPServersDB
+        cCMCollection SUPADRWKSWeek2
         { 
-            CollectionName = "Software Updates - Servers - Database Services"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Software Updates - Servers"
+            CollectionName = "Software Updates - Workstations - Week 2"
+		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
+		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
 		    RefreshType = "Periodic"
@@ -893,35 +939,11 @@
             Ensure = "Present"
         }
 
-        cCMCollection SUPServersGeneral
+        cCMCollection SUPADRWKSWeek3
         { 
-            CollectionName = "Software Updates - Servers - General"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Software Updates - Servers"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPServersWeb
-        { 
-            CollectionName = "Software Updates - Servers - Web Services"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Software Updates - Servers"
-		    CollectionType = "Device"
-		    RefreshDays = "7"
-		    RefreshType = "Periodic"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
-
-        cCMCollection SUPServersmail
-        { 
-            CollectionName = "Software Updates - Servers - Mail Services"
-		    LimitingCollectionName = "All Servers"
-		    ParentFolder = "Software Updates - Servers"
+            CollectionName = "Software Updates - Workstations - Week 3"
+		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
+		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
 		    RefreshDays = "7"
 		    RefreshType = "Periodic"
