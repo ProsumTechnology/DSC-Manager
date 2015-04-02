@@ -99,15 +99,6 @@
             SCCMAdministratorCredential = $SCCMAdministratorCredential
             Ensure = "Present"
         }
-        
-        cCMFolder DeviceSCCMUpdates
-        { 
-            FolderName = "Software Updates - SCCM"
-            FolderType = "Device Collection"
-            ParentFolder = "Software Updates"
-            SCCMAdministratorCredential = $SCCMAdministratorCredential
-            Ensure = "Present"
-        }
 
         cCMFolder DeviceOSD
         { 
@@ -867,9 +858,41 @@
             Ensure = "Present"
         }
 
+        cCMCollectionRule SUPADRSVRAssignQuery1
+        {
+            RuleName = 'All Servers'
+            ParentCollection = 'Software Updates - Servers - ADR Assignment'
+            ParentCollectionType = 'Device'
+            QueryType = 'Include'
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRSVRCatchAll
+        { 
+            CollectionName = "Software Updates - Servers - Maintenance CatchAll"
+		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollectionRule SUPADRSVRCatchAllQuery1
+        {
+            RuleName = 'All Servers'
+            ParentCollection = 'Software Updates - Servers - Maintenance CatchAll'
+            ParentCollectionType = 'Device'
+            QueryType = 'Include'
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
         cCMCollection SUPADRSVRWeek1
         { 
-            CollectionName = "Software Updates - Servers - Week 1"
+            CollectionName = "Software Updates - Servers - Maintenance Week 1"
 		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
 		    ParentFolder = "Software Updates - Servers"
 		    CollectionType = "Device"
@@ -881,7 +904,7 @@
 
         cCMCollection SUPADRSVRWeek2
         { 
-            CollectionName = "Software Updates - Servers - Week 2"
+            CollectionName = "Software Updates - Servers - Maintenance Week 2"
 		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
 		    ParentFolder = "Software Updates - Servers"
 		    CollectionType = "Device"
@@ -893,7 +916,19 @@
 
         cCMCollection SUPADRSVRWeek3
         { 
-            CollectionName = "Software Updates - Servers - Week 3"
+            CollectionName = "Software Updates - Servers - Maintenance Week 3"
+		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
+		    ParentFolder = "Software Updates - Servers"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRSVRWeek4
+        { 
+            CollectionName = "Software Updates - Servers - Maintenance Week 4"
 		    LimitingCollectionName = "Software Updates - Servers - ADR Assignment"
 		    ParentFolder = "Software Updates - Servers"
 		    CollectionType = "Device"
@@ -915,9 +950,51 @@
             Ensure = "Present"
         }
 
+        cCMCollectionRule SUPADRWKSAssignQuery1
+        {
+            RuleName = 'All Workstations'
+            ParentCollection = 'Software Updates - Workstations - ADR Assignment'
+            ParentCollectionType = 'Device'
+            QueryType = 'Include'
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollectionRule SUPADRWKSAssignQuery2
+        {
+            RuleName = 'All Unknown Computers'
+            ParentCollection = 'Software Updates - Workstations - ADR Assignment'
+            ParentCollectionType = 'Device'
+            QueryType = 'Include'
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRWKSCatchAll
+        { 
+            CollectionName = "Software Updates - Workstations - Maintenance CatchAll"
+		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
+		    ParentFolder = "Software Updates - Workstations"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollectionRule SUPADRWKSCatchAllQuery1
+        {
+            RuleName = 'All Workstations'
+            ParentCollection = 'Software Updates - Workstations - Maintenance CatchAll'
+            ParentCollectionType = 'Device'
+            QueryType = 'Include'
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
         cCMCollection SUPADRWKSWeek1
         { 
-            CollectionName = "Software Updates - Workstations - Week 1"
+            CollectionName = "Software Updates - Workstations - Maintenance Week 1"
 		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
 		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
@@ -929,7 +1006,7 @@
 
         cCMCollection SUPADRWKSWeek2
         { 
-            CollectionName = "Software Updates - Workstations - Week 2"
+            CollectionName = "Software Updates - Workstations - Maintenance Week 2"
 		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
 		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"
@@ -941,7 +1018,19 @@
 
         cCMCollection SUPADRWKSWeek3
         { 
-            CollectionName = "Software Updates - Workstations - Week 3"
+            CollectionName = "Software Updates - Workstations - Maintenance Week 3"
+		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
+		    ParentFolder = "Software Updates - Workstations"
+		    CollectionType = "Device"
+		    RefreshDays = "7"
+		    RefreshType = "Periodic"
+            SCCMAdministratorCredential = $SCCMAdministratorCredential
+            Ensure = "Present"
+        }
+
+        cCMCollection SUPADRWKSWeek4
+        { 
+            CollectionName = "Software Updates - Workstations - Maintenance Week 4"
 		    LimitingCollectionName = "Software Updates - Workstations - ADR Assignment"
 		    ParentFolder = "Software Updates - Workstations"
 		    CollectionType = "Device"

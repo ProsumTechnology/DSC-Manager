@@ -12,7 +12,7 @@ $Configuration = "SCCMConfiguration"
 $ConfigurationPath = "$env:HOMEDRIVE\DSC-Manager\Configuration"
 $ConfigurationData = "ProximusHosts"
 $ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData"
-$SourceModules = "$env:HOMEDRIVE\DSC-Manager\Modules"
+$SourceModules = "$env:PROGRAMFILES\WindowsPowershell\Modules"
 $PullServerModules = "$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
 $PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration"
 $PullServerCertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates"
@@ -43,6 +43,9 @@ $UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $Con
 
 #Create All Configuration MOFs based on updated data and place in respective Pull Server Configuration
 Update-DSCMPullServer -Configuration $Configuration -ConfigurationPath $ConfigurationPath -ConfigurationData $UpdatedConfigurationData -PasswordData $PasswordData -PullServerConfiguration $PullServerConfiguration
+
+#Update Pull Server module repo with current modules from the local repo
+Update-DSCMModules -SourceModules $SourceModules -PullServerModules $PullServerModules
 
 ######################################################################################
 # Unload DSC-Management

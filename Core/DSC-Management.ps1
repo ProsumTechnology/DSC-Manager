@@ -211,52 +211,56 @@ param(
     }
 
 #This function is automatically zip-up modules into the right format and place them into the DSC module folder
-function New-DSCMResourceZip
+function Update-DSCMModules
 {
     param
     (
-        [Parameter(Mandatory=$true)][String]$modulePath,
-        [Parameter(Mandatory=$false)][String]$outputDir="$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
+        [Parameter(Mandatory=$false)][String]$SourceModules="$env:PROGRAMFILES\WindowsPowershell\Modules",
+        [Parameter(Mandatory=$false)][String]$PullServerModules="$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
     )
  
-    # Read the module name & version
-    
-    $module = Import-Module $modulePath -PassThru
-    $moduleName = $module.Name
-    $version = $module.Version.ToString()
-    Remove-Module $moduleName
+    # Read the module names & versions
+    $SourceList = (Get-ChildItem -Directory $SourceModules).Name
+    foreach ($SourceModule in $SourceList) {
+        write-verbose "Check module $SourceModule"
+        $module = Import-Module $SourceModules\$SourceModule -PassThru
+        $moduleName = $module.Name
+        $version = $module.Version.ToString()
+        Remove-Module $moduleName
+        $zipFilename = ("{0}_{1}.zip" -f $moduleName, $version)
+        $outputPath = Join-Path $PullServerModules $zipFilename
+        if (!(Test-Path $outputPath)) {
+            write-verbose "$outputPath is $zipFilename, creating zip"
+            # Courtesy of: @Neptune443 (http://blog.cosmoskey.com/powershell/desired-state-configuration-in-pull-mode-over-smb/)
+            [byte[]]$data = New-Object byte[] 22
+            $data[0] = 80
+            $data[1] = 75
+            $data[2] = 5
+            $data[3] = 6
+            [System.IO.File]::WriteAllBytes($outputPath, $data)
+            $acl = Get-Acl -Path $outputPath
  
-    $zipFilename = ("{0}_{1}.zip" -f $moduleName, $version)
-    $outputPath = Join-Path $outputDir $zipFilename
-    if (Test-Path $outputPath) { del $outputPath }
- 
-    # Courtesy of: @Neptune443 (http://blog.cosmoskey.com/powershell/desired-state-configuration-in-pull-mode-over-smb/)
-    [byte[]]$data = New-Object byte[] 22
-    $data[0] = 80
-    $data[1] = 75
-    $data[2] = 5
-    $data[3] = 6
-    [System.IO.File]::WriteAllBytes($outputPath, $data)
-    $acl = Get-Acl -Path $outputPath
- 
-    $shellObj = New-Object -ComObject "Shell.Application"
-    $zipFileObj = $shellObj.NameSpace($outputPath)
-    if ($zipFileObj -ne $null)
-    {
-        $target = get-item $modulePath
-        # CopyHere might be async and we might need to wait for the Zip file to have been created full before we continue
-        # Added flags to minimize any UI & prompts etc.
-        $zipFileObj.CopyHere($target.FullName, 0x14)      
-        [Runtime.InteropServices.Marshal]::ReleaseComObject($zipFileObj) | Out-Null
-        Set-Acl -Path $outputPath -AclObject $acl
-        New-DSCCheckSum -ConfigurationPath $outputDir
-    }
-    else
-    {
-        Throw "Failed to create the zip file"
-    }
- 
-    return $outputPath
+            $shellObj = New-Object -ComObject "Shell.Application"
+            $zipFileObj = $shellObj.NameSpace($outputPath)
+            if ($zipFileObj -ne $null) {
+                write-verbose "adding modules to zip $outputPath"
+                $target = get-item $SourceModules\$SourceModule
+                # CopyHere might be async and we might need to wait for the Zip file to have been created full before we continue
+                # Added flags to minimize any UI & prompts etc.
+                $zipFileObj.CopyHere($target.FullName, 0x14)      
+                [Runtime.InteropServices.Marshal]::ReleaseComObject($zipFileObj) | Out-Null
+                Set-Acl -Path $outputPath -AclObject $acl
+                New-DSCCheckSum -ConfigurationPath $PullServerModules
+                }
+            else {
+                Throw "Failed to create the zip file"
+                }
+            }
+        else {
+            write-verbose "file already exists, skipping $zipFilename"
+            }
+        }
+    write-verbose "complete"
 }
 
 #This function is to import all certificates from the CertStore onto the local machine
@@ -336,7 +340,7 @@ param(
 
     #create a checksum file for eah generated MOF
     Write-Verbose -Message "Generating checksum..."
-    New-DSCCheckSum -ConfigurationPath $WorkingPath -OutPath $WorkingPath -Verbose -Force
+    New-DSCCheckSum -ConfigurationPath $WorkingPath -OutPath $WorkingPath -Force
     
     #All Generation is complete, now we copy it all to the Pull Server
     Write-Verbose -Message "Moving all files to $PullServerConfiguration..."
