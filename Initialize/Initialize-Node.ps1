@@ -19,7 +19,7 @@
            RefreshFrequencyMins = 15;
            ConfigurationModeFrequencyMins = 30; 
            ConfigurationMode = "ApplyAndAutoCorrect";
-           DownloadManagerCustomData = (@{ServerUrl = "https://DSC.proximus.prosum.com:8080/PSDSCPullServer/PSDSCPullServer.svc"})
+           DownloadManagerCustomData = (@{ServerUrl = "https://DSC.lab.transformingintoaservice.com:8080/PSDSCPullServer/PSDSCPullServer.svc"})
         }
      } 
 }  
