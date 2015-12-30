@@ -315,7 +315,7 @@ param(
     [Parameter(Mandatory=$true)][String]$Configuration,
     [Parameter(Mandatory=$true)][HashTable]$ConfigurationData,
     [Parameter(Mandatory=$false)][String]$PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passwords.xml",
-    [Parameter(Mandatory=$false)][String]$ConfigurationPath = "$env:HOME\DSC-Manager\Configuration",
+    [Parameter(Mandatory=$false)][String]$ConfigurationFile = "$env:HOME\DSC-Manager\Configuration\MasterConfig.ps1",
     [Parameter(Mandatory=$false)][String]$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration",
     [Parameter(Mandatory=$false)][String]$WorkingPath = $env:TEMP
     )
@@ -323,10 +323,10 @@ param(
     #Load DSC Configuration into script
     Write-Verbose -Message "Loading DSC Configuration..."
     Try {
-        Invoke-Expression ". $ConfigurationPath\$Configuration.ps1"
+        Invoke-Expression ". $ConfigurationFile"
         }
     Catch {
-        Throw "error loading DSC Configuration $ConfigurationPath\$Configuration.ps1"
+        Throw "error loading DSC Configuration $ConfigurationFile"
         }
 
     #Generate Password Variables from PasswordData

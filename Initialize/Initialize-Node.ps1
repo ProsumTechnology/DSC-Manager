@@ -1,4 +1,10 @@
-﻿Configuration SimpleMetaConfigurationForPull 
+﻿#Variables for the script placed up top to make it easier to change
+$CertStore = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\NodeCertificates"
+$CSVFile = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\Management\dscnodes.csv"
+$GetName = $env:COMPUTERNAME
+
+#Compile Configuration for install
+Configuration SimpleMetaConfigurationForPull 
 { 
 
     Param(
@@ -24,14 +30,13 @@
      } 
 }  
 
-#Variables for the script placed up top to make it easier to change
-$CertStore = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\NodeCertificates"
-$CSVFile = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\Management\dscnodes.csv"
-$GetName = $env:COMPUTERNAME
+#Set Base Variables for remaining Script
+[bool]$CertNeedsUpdate = $false
+[string]$BestCert = $NULL
 
 #Finds a certificate in the localmachine store with the latest expiration date
 $BestCert = Get-Childitem cert:\LocalMachine\MY | Sort-Object NotAfter -Descending | Select -First 1
-[bool]$CertNeedsUpdate = $false
+
 
 #If no Files exist in the cert store with the computer name, mark to update
 If(!(Test-Path -Path ($CertStore+'\'+$GetName+'.cer'))) {
