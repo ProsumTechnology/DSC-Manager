@@ -10,7 +10,6 @@
 ######################################################################################
 $Configuration = "MasterConfig"
 $ConfigurationFile = "$env:HOMEDRIVE\DSC-Manager\Configuration\MasterConfig.ps1"
-$ConfigurationResource = "$env:HOMEDRIVE\DSC-Manager\Configuration\CompositeConfiguration" #New Variable, needs to be framed
 $ConfigurationData = "LabHosts"
 $ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData"
 $SourceModules = "$env:PROGRAMFILES\WindowsPowershell\Modules"

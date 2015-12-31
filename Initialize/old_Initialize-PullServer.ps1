@@ -16,6 +16,12 @@ if(!(Get-Module DSC-Management)) {
         }
     }
 
+#amends module path
+$originalpaths = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath).PSModulePath
+$newPath=$originalpaths+’;C:\DSC-Manager\Modules’
+Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
+
+
 #Need to know where the Certificates are Stored
 $CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates"
 

@@ -4,10 +4,14 @@ function Create-DSCMCertStores
     param(
         [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
         [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+        [Parameter(Mandatory=$false)][String]$AgentRegistration = "$env:PROGRAMFILES\WindowsPowershell\DscService\AgentRegistration",
         [switch]$TestOnly
         )
 
     [bool]$IsValid=$true
+    [string]$Domain=(gwmi Win32_NTDomain).DomainName
+    $Domain = $Domain.Trim()
+
 
     If($CertStore -and !(Test-Path -Path ($CertStore)))
         {
@@ -16,7 +20,14 @@ function Create-DSCMCertStores
             }
         else {
             try {
-                New-Item ($CertStore) -type directory -force -ErrorAction STOP
+                New-Item ($CertStore) -type directory -force -ErrorAction STOP | Out-Null
+                New-SmbShare -Name "CertStore" -Path $CertStore -ChangeAccess Everyone | Out-Null
+                $acl = get-acl $CertStore
+                $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+                $propagation = [system.security.accesscontrol.PropagationFlags]"None"
+                $rule = new-object System.Security.AccessControl.FileSystemAccessRule("$Domain\Domain Computers","Modify",$inherit,$propagation,"Allow")
+                $acl.SetAccessRule($rule)
+                set-acl $CertStore $acl
                 }
             catch {
                 $E = $_.Exception.GetBaseException()
@@ -32,7 +43,7 @@ function Create-DSCMCertStores
             }
         else {
             try {
-                New-Item ($FileName) -type file -force -ErrorAction STOP
+                New-Item ($FileName) -type file -force -ErrorAction STOP | Out-Null
                 $NewLine = "NodeName,NodeGUID,Thumbprint"
                 $NewLine | add-content -path $FileName -ErrorAction STOP
                 }
@@ -42,6 +53,30 @@ function Create-DSCMCertStores
                 }
             }
         }
+
+    If($AgentRegistration -and !(Test-Path -Path ($AgentRegistration)))
+        {
+        If ($TestOnly) {
+            [bool]$IsValid=$false
+            }
+        else {
+            try {
+                New-Item ($AgentRegistration) -type directory -force -ErrorAction STOP | Out-Null
+                New-SmbShare -Name "AgentRegistration" -Path $AgentRegistration -ChangeAccess Everyone | Out-Null
+                $acl = get-acl $AgentRegistration
+                $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+                $propagation = [system.security.accesscontrol.PropagationFlags]"None"
+                $rule = new-object System.Security.AccessControl.FileSystemAccessRule("$Domain\Domain Computers","Modify",$inherit,$propagation,"Allow")
+                $acl.SetAccessRule($rule)
+                set-acl $AgentRegistration $acl
+                }
+            catch {
+                $E = $_.Exception.GetBaseException()
+                $E.ErrorInformation.Description
+                }
+            }
+        }
+
     If ($TestOnly) {return $IsValid}
 }
 
