@@ -1,11 +1,19 @@
 ﻿Configuration MasterConfig
 {
-    Import-DscResource -Name DC
+    Import-DscResource -Name xDSCMDC xDSCMSCCM
     
     Node $AllNodes.Where{$_.Service -eq "DC"}.NodeName {
-        DC BaseConfig
+        xDSCMDC DCConfig
         {
             Role = $Node.Role
+        }
+    }
+
+    Node $AllNodes.Where{$_.Service -eq "SCCM"}.NodeName {
+        xDSCMSCCM SCCMConfig
+        {
+            Role = $Node.Role
+            DSLPath = $Node.DSLPath
         }
     }
 }

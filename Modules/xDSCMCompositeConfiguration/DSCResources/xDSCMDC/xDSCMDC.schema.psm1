@@ -1,4 +1,4 @@
-Configuration DC
+Configuration xDSCMDC
 {
     Param (
         [Parameter(Mandatory=$false)][String]$Role

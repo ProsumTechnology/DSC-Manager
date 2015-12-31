@@ -3,6 +3,11 @@ $CertStore = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\NodeCer
 $CSVFile = "\\es-sdsc-01\c$\Program Files\WindowsPowershell\DscService\Management\dscnodes.csv"
 $GetName = $env:COMPUTERNAME
 
+#amends module path
+$originalpaths = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath).PSModulePath
+$newPath=$originalpaths+’;C:\DSC-Manager\Modules’
+Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
+
 #Compile Configuration for install
 Configuration SimpleMetaConfigurationForPull 
 { 
