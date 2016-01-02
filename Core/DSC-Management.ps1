@@ -382,3 +382,35 @@ param(
     $SourceFiles = $WorkingPath + "\*.mof*"
     Move-Item $SourceFiles $PullServerConfiguration -Force
 }
+
+#This function approves pending agents for use by DSC
+Function Add-xDSCMAgent
+{
+param (
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory=$false)][String]$AgentReg = "$env:PROGRAMFILES\WindowsPowershell\DscService\AgentRegistration",
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName,
+    [switch]$Silent
+    )
+
+    #Generate Request and check file
+    $Request = "$AgentReg\$NodeName.txt"
+    
+    If (Test-Path $request) {
+        Try {
+            write-verbose "replying with GUID for use by agent"
+            $newguid = Update-DSCMGUIDMapping -NodeName $NodeName -FileName $FileName
+            Update-DSCMCertMapping -NodeName $NodeName -CertStore $CertStore -FileName $FileName -Silent
+            $newguid | Out-File -FilePath $request
+            }
+        Catch {
+            Throw "Error trying to genrate the request file!"
+            }
+        }
+    Else {
+        Write-Output "Cannot find a request for $NodeName, exiting"
+        exit
+        }
+    Write-Output "Node $NodeName has been approved for use.  Run Initialize-Agent script again."
+    }
