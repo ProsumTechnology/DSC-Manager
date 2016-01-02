@@ -108,7 +108,8 @@ Configuration SimpleMetaConfigurationForPull
            RefreshFrequencyMins = 15;
            ConfigurationModeFrequencyMins = 30; 
            ConfigurationMode = "ApplyAndAutoCorrect";
-           DownloadManagerCustomData = (@{ServerUrl = $PullServerURL})
+           DownloadManagerCustomData = @{ServerURL = $PullServerURL}
+           #DownloadManagerCustomData = $PullServerURL
         }
      } 
 }  
@@ -123,3 +124,7 @@ Try {
 Catch {
     Throw "Cannot configure LCM.  Exiting ..."
     }
+
+#Remove Request after successful processing for security reasons
+write-verbose "Confiuration success, removign original request"
+remove-item "$AgentRegistration\$GetName.txt"
