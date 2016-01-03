@@ -1,36 +1,61 @@
 ﻿param (
     [Parameter(Mandatory=$true)][String]$Thumbprint,
     [Parameter(Mandatory=$false)][String]$NodeName = "localhost",
-    [Parameter(Mandatory=$false)][String]$PowerShellGetInstaller,
-    [Parameter(Mandatory=$false)][Switch]$WhatIf = $false
+    [Parameter(Mandatory=$false)][String]$DSCManagerPath = "$env:HOMEDRIVE\DSC-Manager",
+    [Parameter(Mandatory=$false)][String]$PowerShellGetInstaller
     )
 
-#Configuration Data For PullServer Install$configData = @{    AllNodes = @(        @{            NodeName = "*"            PSDscAllowPlainTextPassword = $true         },         @{            NodeName = $NodeName            Role = "DSCPullServer"            Source = $PowerShellGetInstaller            CertificateThumbPrint = $Thumbprint         }    );}
+#Configuration Data For PullServer Install$configData = @{    AllNodes = @(        @{            NodeName = "*"            PSDscAllowPlainTextPassword = $true         },         @{            NodeName = $NodeName            CertificateThumbPrint = $Thumbprint         }    );}
 
 #amends module path
+$DSCManagerURL = "$DSCManagerPath\Modules"
 $originalpaths = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath).PSModulePath
-$newPath=$originalpaths+’;C:\DSC-Manager\Modules’
-Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
+If (!($originalpaths -contains $DSCManagerURL) -and (Test-Path $DSCManagerURL)) {
+    write-verbose "updating PSModulePath to include new modules"
+    $newPath=$originalpaths+’;C:\DSC-Manager\Modules’
+    Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
+    }
+ElseIF (!(Test-Path $DSCManagerURL)) { 
+    Throw "The Path $DSCManagerURL cannot be found. Exiting"
+    }
 
 #This imports the DSC Management functions.  This helps manage Certificate and GUID mappings
-if(!(Get-Module DSCManager)) {
+if(!(Get-Module xDSCManager)) {
     Try {
-        Import-Module DSCManager
+        Import-Module xDSCManager
         }
     Catch {
-        Throw "Trying to load Management tools but failing."
+        Throw "Trying to load Management tools but failing.  Check for presense of module xDSCManager"
         }
     }
 
 #Use PowerShellGet to to download xPSDersiredState if it's missing
-install-module xPSDesiredStateConfiguration
+If (!(get-module xPSDesiredStateConfiguration -ListAvailable)) {
+    If (get-module PowerShellGet -ListAvailable) {
+        write-verbose "Required modules missing, but PowerShellGet is installed, grabbing modules"
+        import-module PowerShellGet
+        install-module xPSDesiredStateConfiguration
+        }
+    ElseIf (($PSVersionTable.PSVersion.Major -lt 5) -and (Test-Path $PowerShellGetInstaller)) {
+        write-verbose "Attempting to install PowerShellGet via "
+        $cmd = "msiexec /i $PowerShellGetInstaller /quiet"
+        Invoke-command $cmd
+        import-module PowerShellGet
+        Get-PackageProvider -Name NuGet -ForceBootstrap
+        install-module xPSDesiredStateConfiguration
+        }
+    Else {
+        Throw "The required modules are not available nor is PowerShellGet available to aquire them."
+        }
+    } #End missing xPSDesiredStateConfiguration
 
 #DSC Configuration
+write-verbose "Loading configuration for Pull Server"
 configuration DSC_PullServer {
 
     Import-DSCResource -ModuleName xPSDesiredStateConfiguration
 
-    Node $AllNodes.where{ $_.Role.Contains("DSCPullServer") }.NodeName
+    Node $AllNodes.NodeName
     {
         WindowsFeature DSCServiceFeature
         {
@@ -49,39 +74,6 @@ configuration DSC_PullServer {
             Ensure = "Present"
             Name   = "Web-Mgmt-Console"            
         }
-
-        Script InstallPowerShellGet
-        {
-            GetScript = {
-                $Name = (get-module PowerShellGet -ListAvailable).Name
-                $Version =(get-module PowerShellGet -ListAvailable).Name.Major
-                $Return =  @{
-                    Name = $Name;
-                    Version = $Version;
-                    }
-                $Return
-                } #End GetScript
-
-            SetScript = {
-                If (!(get-module PowerShellGet -ListAvailable)) {
-                    If (($PSVersionTable.PSVersion.Major -eq 4) -or ($PSVersionTable.PSVersion.Major -eq 3)) {
-                        $cmd = 'msiexec /package '+$Source+'\PackageManagement_x64.msi /quiet'
-                        Invoke-Expression $cmd
-                        Get-PackageProvider -Name NuGet -ForceBootstrap
-                        } #End PSV4 Upgrade
-                    Else {
-                        write-verbose "can't find PowerShellGet.  Please Address" 
-                        } #End Else
-                    } #End Install Missing Module
-                } #End SetScript
-
-            TestScript = {
-                $Name = (get-module PowerShellGet -ListAvailable).Name
-                If ($Name -ne $Null) {$IsInstalled = $True}
-                Else {$IsInstalled = $False}
-                $IsInstalled
-                }
-        } #End InstallPowerShellGet
 
         xDscWebService PSDSCPullServer
         {
@@ -110,7 +102,11 @@ configuration DSC_PullServer {
     }
  } #End DSC_PullServer
 
+#Actually Install Pull Server
+write-verbose "Installing Pull Server"
 DSC_PullServer -ConfigurationData $ConfigData
 Start-DscConfiguration -wait -verbose .\DSC_PullServer -force
 
+#Finally install folders and shares needed by the DSCManagerTools
+write-verbose "Installing shares and folders needed for automatic agent enrollment"
 Install-DSCMCertStores

@@ -22,9 +22,9 @@ $PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passw
 ######################################################################################
 # Import DSC-Management
 ######################################################################################
-if(!(Get-Module DSCManager)) {
+if(!(Get-Module xDSCManager)) {
     Try {
-        Import-Module DSCManager
+        Import-Module xDSCManager
         }
     Catch {
         Throw "Cannot load the DSC Management Tools.  Please make sure the module is present and the initial install has been run"

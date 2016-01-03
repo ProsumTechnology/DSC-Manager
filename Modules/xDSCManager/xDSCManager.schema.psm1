@@ -350,7 +350,7 @@ param(
     [Parameter(Mandatory=$true)][String]$Configuration,
     [Parameter(Mandatory=$true)][HashTable]$ConfigurationData,
     [Parameter(Mandatory=$false)][String]$PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passwords.xml",
-    [Parameter(Mandatory=$false)][String]$ConfigurationFile = "$env:HOME\DSC-Manager\Configuration\MasterConfig.ps1",
+    [Parameter(Mandatory=$false)][String]$ConfigurationFile = "$env:HOMEDRIVE\DSC-Manager\Configuration\MasterConfig.ps1",
     [Parameter(Mandatory=$false)][String]$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration",
     [Parameter(Mandatory=$false)][String]$WorkingPath = $env:TEMP
     )
