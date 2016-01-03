@@ -116,7 +116,7 @@ Configuration SimpleMetaConfigurationForPull
 
 #Configures LCM
 Try {
-    $PullServerURL = 'https://'+$PullServer+':8080/PSDSCPullServer/PSDSCPullServer.svc'
+    $PullServerURL = 'https://'+$PullServer+':8080/PSDSCPullServer.svc'
     SimpleMetaConfigurationForPull -NodeGUID $GetGUID -NodeName $GetName -NodeThumbprint $BestCert.Thumbprint -PullServerURL $PullServerURL
     $FilePath = (Get-Location -PSProvider FileSystem).Path + "\SimpleMetaConfigurationForPull"
     Set-DscLocalConfigurationManager -ComputerName $GetName -Path $FilePath -Verbose
