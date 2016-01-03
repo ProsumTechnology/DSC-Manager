@@ -1,5 +1,5 @@
-﻿#Creates the Certificate Store if missing.
-function Create-DSCMCertStores
+#Creates the Certificate Store if missing.
+function Install-DSCMCertStores
 {
     param(
         [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
@@ -164,7 +164,7 @@ function Update-DSCMGUIDMapping
     [switch]$Silent
     )
 
-    If (Create-DSCMCertStores -FileName $FileName -TestOnly) {
+    If (Install-DSCMCertStores -FileName $FileName -TestOnly) {
         $CSVFile = (import-csv $FileName)
         If(!($CSVFile | where-object {$_.NodeName -eq $NodeName})) {
             $NodeGUID = [guid]::NewGuid()
@@ -205,7 +205,7 @@ param(
     [switch]$Silent
     )
 
-    If (Create-DSCMCertStores -FileName $FileName -CertStore $CertStore -TestOnly) {
+    If (Install-DSCMCertStores -FileName $FileName -CertStore $CertStore -TestOnly) {
         $CSVFile = import-csv $FileName
         
         #Check for existence of Certificate file
@@ -306,7 +306,7 @@ param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName
     )
 
-    If (Create-DSCMCertStores -CertStore $CertStore -TestOnly) {
+    If (Install-DSCMCertStores -CertStore $CertStore -TestOnly) {
         $CertList = Get-ChildItem $CertStore
         
         #Verify every cert in the CertStore has been imported to all locations
@@ -331,7 +331,7 @@ param(
     }
 
 #This function creates Variables storing credentials
-Function Create-PasswordScriptVariable
+Function New-PasswordScriptVariable
 {
 param(
     [Parameter(Mandatory=$True)][String]$Name,
@@ -367,7 +367,7 @@ param(
     #Generate Password Variables from PasswordData
     Write-Verbose -Message "Loading Passwords into secure string variables..."
     $Config = [XML] (Get-Content "$PasswordData")
-    $Config.Credentials | ForEach-Object {$_.Variable} | Where-Object {$_.Name -ne $null} | ForEach-Object {Create-PasswordScriptVariable -Name $_.Name -User $_.User -Password $_.Password}
+    $Config.Credentials | ForEach-Object {$_.Variable} | Where-Object {$_.Name -ne $null} | ForEach-Object {New-PasswordScriptVariable -Name $_.Name -User $_.User -Password $_.Password}
 
     #generate MOF files using Configurationdata and output to the appropriate temporary path
     Write-Verbose -Message "Generating MOF using Configurationdata and output to $WorkingPath..."
