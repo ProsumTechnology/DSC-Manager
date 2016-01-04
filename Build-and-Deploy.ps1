@@ -8,9 +8,9 @@
 ######################################################################################
 # Master Variables
 ######################################################################################
-$Configuration = "SCCMConfiguration"
-$ConfigurationPath = "$env:HOMEDRIVE\DSC-Manager\Configuration"
-$ConfigurationData = "ProximusHosts"
+$Configuration = "MasterConfig"
+$ConfigurationFile = "$env:HOMEDRIVE\DSC-Manager\Configuration\MasterConfig.ps1"
+$ConfigurationData = "LabHosts"
 $ConfigurationDataPath = "$env:HOMEDRIVE\DSC-Manager\ConfigurationData"
 $SourceModules = "$env:PROGRAMFILES\WindowsPowershell\Modules"
 $PullServerModules = "$env:PROGRAMFILES\WindowsPowershell\DscService\Modules"
@@ -22,12 +22,12 @@ $PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passw
 ######################################################################################
 # Import DSC-Management
 ######################################################################################
-if(!(Get-Module DSC-Management)) {
+if(!(Get-Module xDSCManager)) {
     Try {
-        Import-Module ('.\core\DSC-Management.ps1')
+        Import-Module xDSCManager
         }
     Catch {
-        Throw "Cannot load the DSC GUID and Certificate Management Tools.  Please make sure the module is present and try again"
+        Throw "Cannot load the DSC Management Tools.  Please make sure the module is present and the initial install has been run"
         }
     }
 
@@ -42,19 +42,7 @@ Update-DSCMTable -ConfigurationData $ConfigurationData -ConfigurationDataPath $C
 $UpdatedConfigurationData = Update-DSCMConfigurationData -ConfigurationData $ConfigurationData -ConfigurationDataPath $ConfigurationDataPath -FileName $PullServerNodeCSV
 
 #Create All Configuration MOFs based on updated data and place in respective Pull Server Configuration
-Update-DSCMPullServer -Configuration $Configuration -ConfigurationPath $ConfigurationPath -ConfigurationData $UpdatedConfigurationData -PasswordData $PasswordData -PullServerConfiguration $PullServerConfiguration
+Update-DSCMPullServer -Configuration $Configuration -ConfigurationFile $ConfigurationFile -ConfigurationData $UpdatedConfigurationData -PasswordData $PasswordData -PullServerConfiguration $PullServerConfiguration
 
 #Update Pull Server module repo with current modules from the local repo
 Update-DSCMModules -SourceModules $SourceModules -PullServerModules $PullServerModules
-
-######################################################################################
-# Unload DSC-Management
-######################################################################################
-if(Get-Module DSC-Management) {
-    Try {
-        Remove-Module 'DSC-Management'
-        }
-    Catch {
-        Throw "There was an error unloading the DSC-Management module!  Module may still be in memory"
-        }
-    }

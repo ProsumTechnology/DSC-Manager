@@ -1,13 +1,17 @@
-﻿#Creates the Certificate Store if missing.
-function Create-DSCMCertStores
+#Creates the Certificate Store if missing.
+function Install-DSCMCertStores
 {
     param(
         [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
         [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+        [Parameter(Mandatory=$false)][String]$AgentRegistration = "$env:PROGRAMFILES\WindowsPowershell\DscService\AgentRegistration",
         [switch]$TestOnly
         )
 
     [bool]$IsValid=$true
+    [string]$Domain=(gwmi Win32_NTDomain).DomainName
+    $Domain = $Domain.Trim()
+
 
     If($CertStore -and !(Test-Path -Path ($CertStore)))
         {
@@ -16,7 +20,14 @@ function Create-DSCMCertStores
             }
         else {
             try {
-                New-Item ($CertStore) -type directory -force -ErrorAction STOP
+                New-Item ($CertStore) -type directory -force -ErrorAction STOP | Out-Null
+                New-SmbShare -Name "CertStore" -Path $CertStore -ChangeAccess Everyone | Out-Null
+                $acl = get-acl $CertStore
+                $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+                $propagation = [system.security.accesscontrol.PropagationFlags]"None"
+                $rule = new-object System.Security.AccessControl.FileSystemAccessRule("$Domain\Domain Computers","Modify",$inherit,$propagation,"Allow")
+                $acl.SetAccessRule($rule)
+                set-acl $CertStore $acl
                 }
             catch {
                 $E = $_.Exception.GetBaseException()
@@ -32,7 +43,7 @@ function Create-DSCMCertStores
             }
         else {
             try {
-                New-Item ($FileName) -type file -force -ErrorAction STOP
+                New-Item ($FileName) -type file -force -ErrorAction STOP | Out-Null
                 $NewLine = "NodeName,NodeGUID,Thumbprint"
                 $NewLine | add-content -path $FileName -ErrorAction STOP
                 }
@@ -42,6 +53,30 @@ function Create-DSCMCertStores
                 }
             }
         }
+
+    If($AgentRegistration -and !(Test-Path -Path ($AgentRegistration)))
+        {
+        If ($TestOnly) {
+            [bool]$IsValid=$false
+            }
+        else {
+            try {
+                New-Item ($AgentRegistration) -type directory -force -ErrorAction STOP | Out-Null
+                New-SmbShare -Name "AgentRegistration" -Path $AgentRegistration -ChangeAccess Everyone | Out-Null
+                $acl = get-acl $AgentRegistration
+                $inherit = [system.security.accesscontrol.InheritanceFlags]"ContainerInherit, ObjectInherit"
+                $propagation = [system.security.accesscontrol.PropagationFlags]"None"
+                $rule = new-object System.Security.AccessControl.FileSystemAccessRule("$Domain\Domain Computers","Modify",$inherit,$propagation,"Allow")
+                $acl.SetAccessRule($rule)
+                set-acl $AgentRegistration $acl
+                }
+            catch {
+                $E = $_.Exception.GetBaseException()
+                $E.ErrorInformation.Description
+                }
+            }
+        }
+
     If ($TestOnly) {return $IsValid}
 }
 
@@ -129,7 +164,7 @@ function Update-DSCMGUIDMapping
     [switch]$Silent
     )
 
-    If (Create-DSCMCertStores -FileName $FileName -TestOnly) {
+    If (Install-DSCMCertStores -FileName $FileName -TestOnly) {
         $CSVFile = (import-csv $FileName)
         If(!($CSVFile | where-object {$_.NodeName -eq $NodeName})) {
             $NodeGUID = [guid]::NewGuid()
@@ -170,7 +205,7 @@ param(
     [switch]$Silent
     )
 
-    If (Create-DSCMCertStores -FileName $FileName -CertStore $CertStore -TestOnly) {
+    If (Install-DSCMCertStores -FileName $FileName -CertStore $CertStore -TestOnly) {
         $CSVFile = import-csv $FileName
         
         #Check for existence of Certificate file
@@ -271,7 +306,7 @@ param(
     [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName
     )
 
-    If (Create-DSCMCertStores -CertStore $CertStore -TestOnly) {
+    If (Install-DSCMCertStores -CertStore $CertStore -TestOnly) {
         $CertList = Get-ChildItem $CertStore
         
         #Verify every cert in the CertStore has been imported to all locations
@@ -296,7 +331,7 @@ param(
     }
 
 #This function creates Variables storing credentials
-Function Create-PasswordScriptVariable
+Function New-PasswordScriptVariable
 {
 param(
     [Parameter(Mandatory=$True)][String]$Name,
@@ -315,7 +350,7 @@ param(
     [Parameter(Mandatory=$true)][String]$Configuration,
     [Parameter(Mandatory=$true)][HashTable]$ConfigurationData,
     [Parameter(Mandatory=$false)][String]$PasswordData = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\passwords.xml",
-    [Parameter(Mandatory=$false)][String]$ConfigurationPath = "$env:HOME\DSC-Manager\Configuration",
+    [Parameter(Mandatory=$false)][String]$ConfigurationFile = "$env:HOMEDRIVE\DSC-Manager\Configuration\MasterConfig.ps1",
     [Parameter(Mandatory=$false)][String]$PullServerConfiguration = "$env:PROGRAMFILES\WindowsPowershell\DscService\Configuration",
     [Parameter(Mandatory=$false)][String]$WorkingPath = $env:TEMP
     )
@@ -323,16 +358,16 @@ param(
     #Load DSC Configuration into script
     Write-Verbose -Message "Loading DSC Configuration..."
     Try {
-        Invoke-Expression ". $ConfigurationPath\$Configuration.ps1"
+        Invoke-Expression ". $ConfigurationFile"
         }
     Catch {
-        Throw "error loading DSC Configuration $ConfigurationPath\$Configuration.ps1"
+        Throw "error loading DSC Configuration $ConfigurationFile"
         }
 
     #Generate Password Variables from PasswordData
     Write-Verbose -Message "Loading Passwords into secure string variables..."
     $Config = [XML] (Get-Content "$PasswordData")
-    $Config.Credentials | ForEach-Object {$_.Variable} | Where-Object {$_.Name -ne $null} | ForEach-Object {Create-PasswordScriptVariable -Name $_.Name -User $_.User -Password $_.Password}
+    $Config.Credentials | ForEach-Object {$_.Variable} | Where-Object {$_.Name -ne $null} | ForEach-Object {New-PasswordScriptVariable -Name $_.Name -User $_.User -Password $_.Password}
 
     #generate MOF files using Configurationdata and output to the appropriate temporary path
     Write-Verbose -Message "Generating MOF using Configurationdata and output to $WorkingPath..."
@@ -347,3 +382,35 @@ param(
     $SourceFiles = $WorkingPath + "\*.mof*"
     Move-Item $SourceFiles $PullServerConfiguration -Force
 }
+
+#This function approves pending agents for use by DSC
+Function Add-xDSCMAgent
+{
+param (
+    [Parameter(Mandatory=$false)][String]$FileName = "$env:PROGRAMFILES\WindowsPowershell\DscService\Management\dscnodes.csv",
+    [Parameter(Mandatory=$false)][String]$CertStore = "$env:PROGRAMFILES\WindowsPowershell\DscService\NodeCertificates",
+    [Parameter(Mandatory=$false)][String]$AgentReg = "$env:PROGRAMFILES\WindowsPowershell\DscService\AgentRegistration",
+    [Parameter(Mandatory)][ValidateNotNullOrEmpty()][String]$NodeName,
+    [switch]$Silent
+    )
+
+    #Generate Request and check file
+    $Request = "$AgentReg\$NodeName.txt"
+    
+    If (Test-Path $request) {
+        Try {
+            write-verbose "replying with GUID for use by agent"
+            $newguid = Update-DSCMGUIDMapping -NodeName $NodeName -FileName $FileName
+            Update-DSCMCertMapping -NodeName $NodeName -CertStore $CertStore -FileName $FileName -Silent
+            $newguid | Out-File -FilePath $request
+            }
+        Catch {
+            Throw "Error trying to genrate the request file!"
+            }
+        }
+    Else {
+        Write-Output "Cannot find a request for $NodeName, exiting"
+        exit
+        }
+    Write-Output "Node $NodeName has been approved for use.  Run Initialize-Agent script again."
+    }

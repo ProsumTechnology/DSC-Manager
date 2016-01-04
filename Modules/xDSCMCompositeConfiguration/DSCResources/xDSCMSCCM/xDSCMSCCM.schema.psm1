@@ -1,14 +1,16 @@
-﻿Configuration SCCMConfiguration
+Configuration xDSCMSCCM
 { 
-    #param 
-    #(
-    #    [Parameter(Mandatory=$true)][ValidateNotNullorEmpty()][PsCredential]$SCCMAdministratorCredential
-    #)
-    
+
+    param (
+        [Parameter(Mandatory=$false)][String]$Role,
+        [Parameter(Mandatory=$false)][String]$DSLPath,
+        [Parameter(Mandatory=$false)][String]$SCCMAdministratorCredential
+        )
+
     Import-DSCResource -ModuleName cSCCM
     
-    Node $AllNodes.Where{$_.Service -eq "SCCM" -and $_.Role -eq "PrimarySite" }.NodeName 
-    {
+    If ($Role -contains "PrimarySite") {
+
         cCMFolder Device_All
         { 
             FolderName = "_All"
@@ -1126,13 +1128,12 @@
 
     }
 
-    Node $AllNodes.Where{$_.Service -eq "SCCM" -and $_.DSLPath -ne $NULL}.NodeName 
-    {
+    If ($DSLPath) {
 
         File DSLApplications
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Application_Management\Applications'
+            DestinationPath = $DSLPath + '\Application_Management\Applications'
             Ensure = 'Present'
 
         }
@@ -1140,7 +1141,7 @@
         File DSLAppPackages
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Application_Management\Packages\Windows_8_SxS'
+            DestinationPath = $DSLPath + '\Application_Management\Packages\Windows_8_SxS'
             Ensure = 'Present'
 
         }
@@ -1148,7 +1149,7 @@
         File DSLOSDBoot
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Boot\MDT_x64'
+            DestinationPath = $DSLPath + '\Operating_Systems\Boot\MDT_x64'
             Ensure = 'Present'
 
         }
@@ -1156,7 +1157,7 @@
         File DSLOSDDriverPackages
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Drivers\Packages'
+            DestinationPath = $DSLPath + '\Operating_Systems\Drivers\Packages'
             Ensure = 'Present'
 
         }
@@ -1164,7 +1165,7 @@
         File DSLOSDDriverSource
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Drivers\Source'
+            DestinationPath = $DSLPath + '\Operating_Systems\Drivers\Source'
             Ensure = 'Present'
 
         }
@@ -1172,7 +1173,7 @@
         File DSLOSDImagesCapture
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Images\Capture'
+            DestinationPath = $DSLPath + '\Operating_Systems\Images\Capture'
             Ensure = 'Present'
 
         }
@@ -1180,7 +1181,7 @@
         File DSLOSDImagesDeployment
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Images\Deployment'
+            DestinationPath = $DSLPath + '\Operating_Systems\Images\Deployment'
             Ensure = 'Present'
 
         }
@@ -1188,7 +1189,7 @@
         File DSLOSDImagesReference
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Images\Reference'
+            DestinationPath = $DSLPath + '\Operating_Systems\Images\Reference'
             Ensure = 'Present'
 
         }
@@ -1196,7 +1197,7 @@
         File DSLOSDMDT2013CS
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\MDT2013_CustomSettings'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\MDT2013_CustomSettings'
             Ensure = 'Present'
 
         }
@@ -1204,7 +1205,7 @@
         File DSLOSDMDT2013EF
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\MDT2013_ExtraFiles'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\MDT2013_ExtraFiles'
             Ensure = 'Present'
 
         }
@@ -1212,7 +1213,7 @@
         File DSLOSDMDT2013PS
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\MDT2013_PreStart'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\MDT2013_PreStart'
             Ensure = 'Present'
 
         }
@@ -1220,7 +1221,7 @@
         File DSLOSDMDT2013TK
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\MDT2013_ToolKit'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\MDT2013_ToolKit'
             Ensure = 'Present'
 
         }
@@ -1228,7 +1229,7 @@
         File DSLOSDMDT2013WP
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\MDT2013_Wallpaper'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\MDT2013_Wallpaper'
             Ensure = 'Present'
 
         }
@@ -1236,7 +1237,7 @@
         File DSLOSDUSMT8
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Operating_Systems\Tools\USMT-ADK8'
+            DestinationPath = $DSLPath + '\Operating_Systems\Tools\USMT-ADK8'
             Ensure = 'Present'
 
         }
@@ -1244,7 +1245,7 @@
         File DSLSUPPackagesSCEP
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Software_Updates\Packages\Endpoint_Protection_Updates'
+            DestinationPath = $DSLPath + '\Software_Updates\Packages\Endpoint_Protection_Updates'
             Ensure = 'Present'
 
         }
@@ -1252,7 +1253,7 @@
          File DSLSUPPackages2013
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Software_Updates\Packages\Updates_2013'
+            DestinationPath = $DSLPath + '\Software_Updates\Packages\Updates_2013'
             Ensure = 'Present'
 
         }
@@ -1260,7 +1261,7 @@
          File DSLSUPPackages2014
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Software_Updates\Packages\Updates_2014'
+            DestinationPath = $DSLPath + '\Software_Updates\Packages\Updates_2014'
             Ensure = 'Present'
 
         }
@@ -1268,7 +1269,7 @@
         File DSLSUPSource
         {
             Type = 'Directory'
-            DestinationPath = $Node.DSLPath + '\Software_Updates\Source'
+            DestinationPath = $DSLPath + '\Software_Updates\Source'
             Ensure = 'Present'
 
         }
