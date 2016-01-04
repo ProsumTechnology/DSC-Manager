@@ -7,12 +7,17 @@
 
 #Configuration Data For PullServer Install$configData = @{    AllNodes = @(        @{            NodeName = "*"            PSDscAllowPlainTextPassword = $true         },         @{            NodeName = $NodeName            CertificateThumbPrint = $Thumbprint         }    );}
 
+#Ensure Module path exists in current session
+If (!($env:PSModulePath -like "*$DSCManagerPath\Modules*")) {
+    $env:PSModulePath = $env:PSModulePath+";$DSCManagerPath\Modules"
+    }
+
 #amends module path
 $DSCManagerURL = "$DSCManagerPath\Modules"
 $originalpaths = (Get-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath).PSModulePath
-If (!($originalpaths -contains $DSCManagerURL) -and (Test-Path $DSCManagerURL)) {
+If (!($originalpaths -like "*$DSCManagerURL*") -and (Test-Path $DSCManagerURL)) {
     write-verbose "updating PSModulePath to include new modules"
-    $newPath=$originalpaths+’;C:\DSC-Manager\Modules’
+    $newPath=$originalpaths+";$DSCManagerURL"
     Set-ItemProperty -Path ‘Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment’ -Name PSModulePath –Value $newPath
     }
 ElseIF (!(Test-Path $DSCManagerURL)) { 
@@ -39,7 +44,7 @@ If (!(get-module xPSDesiredStateConfiguration -ListAvailable)) {
     ElseIf (($PSVersionTable.PSVersion.Major -lt 5) -and (Test-Path $PowerShellGetInstaller)) {
         write-verbose "Attempting to install PowerShellGet via "
         $cmd = "msiexec /i $PowerShellGetInstaller /quiet"
-        Invoke-command $cmd
+        Invoke-Expression $cmd | Write-Verbose
         import-module PowerShellGet
         Get-PackageProvider -Name NuGet -ForceBootstrap
         install-module xPSDesiredStateConfiguration
@@ -48,6 +53,13 @@ If (!(get-module xPSDesiredStateConfiguration -ListAvailable)) {
         Throw "The required modules are not available nor is PowerShellGet available to aquire them."
         }
     } #End missing xPSDesiredStateConfiguration
+
+try {
+    Import-Module xPSDesiredStateConfiguration
+    }
+Catch {
+    Throw "Can't import xPSDesiredStateConfiguration ... exiting"
+    }
 
 #DSC Configuration
 write-verbose "Loading configuration for Pull Server"
